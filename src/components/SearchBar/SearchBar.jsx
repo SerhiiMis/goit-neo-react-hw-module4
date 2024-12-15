@@ -1,4 +1,5 @@
 import { useState } from "react";
+import styles from "./SearchBar.module.css";
 
 const SearchBar = ({ onSubmit }) => {
   const [value, setValue] = useState("");
@@ -7,22 +8,24 @@ const SearchBar = ({ onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (value.trim() === "") return;
     onSubmit(value);
-    setValue("");
   };
 
   return (
-    <header>
-      <form onSubmit={handleSubmit}>
+    <header className={styles.header}>
+      <form className={styles.form} onSubmit={handleSubmit}>
         <input
+          className={styles.input}
           type="text"
           autoComplete="off"
-          placeholder="Search images..."
+          autoFocus
+          placeholder="Search images and photos"
           value={value}
           onChange={handleChange}
         />
-        <button type="submit">Search</button>
+        <button className={styles.button} type="submit">
+          Search
+        </button>
       </form>
     </header>
   );

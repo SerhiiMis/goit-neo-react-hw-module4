@@ -5,78 +5,87 @@ import ImageGallery from "./components/ImageGallery/ImageGallery";
 import Loader from "./components/Loader/Loader";
 import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
 import ImageModal from "./components/ImageModal/ImageModal";
-import axios from "axios";
-import "../src/App.css";
+import toast from "react-hot-toast";
 
 const ACCESS_KEY = "Oxcj1L3pkU6z3mOdacfkLBLGDgc1Q3ssIqoAVsxFhfQ";
 
 function App() {
-  const [images, setImages] = useState([]);
   const [query, setQuery] = useState("");
+  const [images, setImages] = useState([]);
   const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [modalImage, setModalImage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [noResults, setNoResults] = useState(false);
 
-  useEffect(() => {
-    if (!query) return;
+  const fetchImages = async (newQuery = query, newPage = page) => {
+    try {
+      setLoading(true);
+      setNoResults(false);
+      setError(false);
 
-    const fetchImages = async () => {
-      setIsLoading(true);
-      setError(null);
+      const response = await fetch(
+        `https://api.unsplash.com/search/photos?page=${newPage}&query=${newQuery}&per_page=12&client_id=${ACCESS_KEY}`
+      );
+      const data = await response.json();
 
-      try {
-        const response = await axios.get(
-          "https://api.unsplash.com/search/photos",
-          {
-            params: {
-              query,
-              page,
-              per_page: 12,
-              client_id: ACCESS_KEY,
-            },
-          }
-        );
-        setImages((prevImages) => [...prevImages, ...response.data.results]);
-      } catch (err) {
-        setError("Something went wrong. Please try again.");
-      } finally {
-        setIsLoading(false);
+      if (data.results.length === 0) {
+        setNoResults(true);
+        toast.error("No images found for your search. Try another query.");
+        return;
       }
-    };
 
-    fetchImages();
-  }, [query, page]);
+      if (newPage === 1) setImages(data.results);
+      else setImages((prev) => [...prev, ...data.results]);
+    } catch {
+      setError(true);
+      toast.error("Failed to fetch images. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = (newQuery) => {
+    if (newQuery.trim() === "") {
+      toast.error("Please enter a search term.");
+      return;
+    }
     setQuery(newQuery);
     setPage(1);
     setImages([]);
+    fetchImages(newQuery, 1);
   };
 
   const loadMore = () => {
-    setPage((prevPage) => prevPage + 1);
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchImages(query, nextPage);
   };
 
-  const openModal = (imageUrl) => {
-    setModalImage(imageUrl);
-    setShowModal(true);
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setModalImage("");
-  };
+  useEffect(() => {
+    if (query) fetchImages(query, page);
+  }, []);
 
   return (
     <>
       <SearchBar onSubmit={handleSearch} />
-      {error && <ErrorMessage message={error} />}
-      <ImageGallery images={images} onImageClick={openModal} />
-      {isLoading && <Loader />}
-      {images.length > 0 && !isLoading && <LoadMoreBtn onClick={loadMore} />}
-      {showModal && <ImageModal imageUrl={modalImage} onClose={closeModal} />}
+      {error && <ErrorMessage />}
+      {noResults && (
+        <p style={{ textAlign: "center", fontSize: "18px" }}>
+          No images found. Please try another search.
+        </p>
+      )}
+      <ImageGallery images={images} onImageClick={setSelectedImage} />
+      {loading && <Loader />}
+      {images.length > 0 && !loading && !noResults && (
+        <LoadMoreBtn onClick={loadMore} />
+      )}
+      {selectedImage && (
+        <ImageModal
+          imageUrl={selectedImage}
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
     </>
   );
 }

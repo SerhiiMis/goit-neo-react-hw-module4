@@ -1,10 +1,18 @@
+import Modal from "react-modal";
+import styles from "./ImageModal.module.css";
+
+Modal.setAppElement("#root");
+
 const ImageModal = ({ imageUrl, onClose }) => {
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal">
-        <img src={imageUrl} alt="Large view" />
-      </div>
-    </div>
+    <Modal
+      isOpen={true}
+      onRequestClose={onClose}
+      overlayClassName={styles.overlay}
+      className={styles.modal}
+    >
+      <img src={imageUrl} alt="Large view" />
+    </Modal>
   );
 };
 

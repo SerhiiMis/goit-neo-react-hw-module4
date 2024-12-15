@@ -1,15 +1,17 @@
 import ImageCard from "../ImageCard/ImageCard";
+import styles from "./ImageGallery.module.css";
 
 const ImageGallery = ({ images, onImageClick }) => {
   return (
-    <ul className="gallery">
+    <ul className={styles.gallery}>
       {images.map(({ id, urls, alt_description }) => (
-        <ImageCard
-          key={id}
-          imageUrl={urls.small}
-          alt={alt_description}
-          onClick={() => onImageClick(urls.regular)}
-        />
+        <li key={id}>
+          <ImageCard
+            imageUrl={urls.small}
+            alt={alt_description}
+            onClick={() => onImageClick(urls.regular)}
+          />
+        </li>
       ))}
     </ul>
   );
