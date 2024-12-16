@@ -18,14 +18,19 @@ function App() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [noResults, setNoResults] = useState(false);
 
-  const fetchImages = async (newQuery = query, newPage = page) => {
+  useEffect(() => {
+    if (!query) return;
+    fetchImages();
+  }, [query, page]);
+
+  const fetchImages = async () => {
     try {
       setLoading(true);
       setNoResults(false);
       setError(false);
 
       const response = await fetch(
-        `https://api.unsplash.com/search/photos?page=${newPage}&query=${newQuery}&per_page=12&client_id=${ACCESS_KEY}`
+        `https://api.unsplash.com/search/photos?page=${page}&query=${query}&per_page=12&client_id=${ACCESS_KEY}`
       );
       const data = await response.json();
 
@@ -35,8 +40,9 @@ function App() {
         return;
       }
 
-      if (newPage === 1) setImages(data.results);
-      else setImages((prev) => [...prev, ...data.results]);
+      setImages((prevImages) =>
+        page === 1 ? data.results : [...prevImages, ...data.results]
+      );
     } catch {
       setError(true);
       toast.error("Failed to fetch images. Please try again.");
@@ -46,25 +52,15 @@ function App() {
   };
 
   const handleSearch = (newQuery) => {
-    if (newQuery.trim() === "") {
-      toast.error("Please enter a search term.");
-      return;
-    }
+    if (newQuery === query) return;
     setQuery(newQuery);
     setPage(1);
     setImages([]);
-    fetchImages(newQuery, 1);
   };
 
   const loadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchImages(query, nextPage);
+    setPage((prevPage) => prevPage + 1);
   };
-
-  useEffect(() => {
-    if (query) fetchImages(query, page);
-  }, []);
 
   return (
     <>
